@@ -40,16 +40,12 @@ def on_ui_tabs():
 
                     script_inputs = scripts.scripts_postproc.setup_ui()
 
-                    tab_scale_to.select(fn=lambda: 1, inputs=[], outputs=[selected_tab])
-                    tab_scale_by.display(False)
-                    resize_mode.display(False)
-                    upscaling_resize.display(False)
-                    extras_upscaler_1.display(False)
-                    extras_upscaler_2_visibility.display(False)
-                    gfpgan_visibility.display(False)
-                    codeformer_visibility.display(False)
-                    codeformer_weight.display(False)
-
+                    print(script_inputs)
+                    i=0
+                    for s in script_inputs[1:]:
+                        print(s.label)
+                        hidden_args.append(i)
+                        i += 1
 
             #Preview/progress
             with gr.Column():
