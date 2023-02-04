@@ -14,6 +14,11 @@ def show_images(image_paths):
 
     return images
 
+def select_upscaler(upscaler):
+    print(upscaler)
+    print (shared.sd_upscalers[upscaler].name)
+    return
+
 
 def on_ui_tabs():
     tab_index = gr.State(value=0)
@@ -41,12 +46,10 @@ def on_ui_tabs():
                     script_inputs = scripts.scripts_postproc.setup_ui()
 
                     print(script_inputs)
-                    i=0
                     for s in script_inputs[1:]:
-                        print(s.label)
-                        hidden_args.append(i)
-                        i += 1
-
+                        if s.elem_id != "extras_upscaling_resize_w" or s.elem_id !="extras_upscaler_1":
+                            s.visible=False
+                    
             #Preview/progress
             with gr.Column():
                 result_images, html_info_x, html_info, html_log = ui_common.create_output_panel("extras", shared.opts.outdir_extras_samples)
@@ -58,6 +61,12 @@ def on_ui_tabs():
         show_extras_results = gr.Checkbox(label='Show result images', value=True, elem_id="extras_show_extras_results", display=False)
 
         tab_autoupscale.select(fn=lambda: 1, inputs=[], outputs=[tab_index])
+
+        uhd_scaler.change(
+            fn=select_upscaler,
+            inputs=[uhd_scaler],
+            outputs=[]
+        )
 
         submit.click(
             fn=call_queue.wrap_gradio_gpu_call(uhd_upscaler.run_postprocessing, extra_outputs=[None, '']),
