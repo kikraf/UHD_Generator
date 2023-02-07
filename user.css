@@ -1,0 +1,11 @@
+#tab_UHD_interface #extras_resize_mode >:first-child{
+    display: none !important;
+}
+
+#tab_UHD_interface #extras_scale_by_tab{
+    display: none !important;
+}
+
+#tab_UHD_interface #extras_scale_to_tab{
+    display: block !important;
+}

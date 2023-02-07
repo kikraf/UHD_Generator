@@ -16,61 +16,103 @@ def run_postprocessing(extras_mode, image, image_folder, input_dir, output_dir, 
     image_names = []
     outputs = []
 
-    if extras_mode == 1:
-        for img in image_folder:
-            image = Image.open(img)
-            image_data.append(image)
-            image_names.append(os.path.splitext(img.orig_name)[0])
-    elif extras_mode == 2:
-        assert not shared.cmd_opts.hide_ui_dir_config, '--hide-ui-dir-config option must be disabled'
-        assert input_dir, 'input directory not selected'
-
-        image_list = shared.listfiles(input_dir)
-        for filename in image_list:
-            try:
-                image = Image.open(filename)
-            except Exception:
-                continue
-            image_data.append(image)
-            image_names.append(filename)
-    else:
-        assert image, 'image not selected'
-
-        image_data.append(image)
-        image_names.append(None)
-
-    if extras_mode == 2 and output_dir != '':
-        outpath = output_dir
-    else:
-        outpath = opts.outdir_samples or opts.outdir_extras_samples
+    outpath = opts.outdir_samples or opts.outdir_extras_samples
 
     infotext = ''
 
-    for image, name in zip(image_data, image_names):
-        shared.state.textinfo = name
+    for img in image_folder:
+        image = Image.open(img)
+        image_data.append(image)
+        name = os.path.splitext(img.orig_name)[0]
+        image_names.append(name)
 
-        existing_pnginfo = image.info or {}
+        width, height = image.size
 
-        pp = scripts_postprocessing.PostprocessedImage(image.convert("RGB"))
+        parts = []
+        parts_names = []
+        parts_outputs = []
+        image_cropped=False
 
-        scripts.scripts_postproc.run(pp, args)
+        if width > 512:
+            image_cropped = True
+            parts.append(image.crop((0, 0, width / 2, height / 2)))
+            parts.append(image.crop((width / 2, 0, width, height / 2)))
+            parts.append(image.crop((0, height / 2, width / 2, height)))
+            parts.append(image.crop((width / 2, height / 2, width, height)))
 
-        if opts.use_original_name_batch and name is not None:
-            basename = os.path.splitext(os.path.basename(name))[0]
-        else:
-            basename = ''
+            parts_names.append(name.split(".")[0]+"_0."+name.split(".")[1])
+            parts_names.append(name.split(".")[0]+"_1."+name.split(".")[1])
+            parts_names.append(name.split(".")[0]+"_2."+name.split(".")[1])
+            parts_names.append(name.split(".")[0]+"_3."+name.split(".")[1])
 
-        infotext = ", ".join([k if k == v else f'{k}: {generation_parameters_copypaste.quote(v)}' for k, v in pp.info.items() if v is not None])
+            # Guardar las partes
+            parts[0].save(parts_names[0])
+            parts[1].save(parts_names[1])
+            parts[2].save(parts_names[2])
+            parts[3].save(parts_names[3])
 
-        if opts.enable_pnginfo:
-            pp.image.info = existing_pnginfo
-            pp.image.info["postprocessing"] = infotext
+            image.close()
 
-        if save_output:
-            images.save_image(pp.image, path=outpath, basename=basename, seed=None, prompt=None, extension=opts.samples_format, info=infotext, short_filename=True, no_prompt=True, grid=False, pnginfo_section_name="extras", existing_info=existing_pnginfo, forced_filename=None)
+            for image,name in zip(parts, parts_names): 
 
-        if extras_mode != 2 or show_extras_results:
-            outputs.append(pp.image)
+                shared.state.textinfo = name
+
+                existing_pnginfo = image.info or {}
+
+                pp = scripts_postprocessing.PostprocessedImage(image.convert("RGB"))
+
+                scripts.scripts_postproc.run(pp, args)
+
+                if opts.use_original_name_batch and name is not None:
+                    basename = os.path.splitext(os.path.basename(name))[0]
+                else:
+                    basename = ''
+
+                infotext = ", ".join([k if k == v else f'{k}: {generation_parameters_copypaste.quote(v)}' for k, v in pp.info.items() if v is not None])
+
+                if opts.enable_pnginfo:
+                    pp.image.info = existing_pnginfo
+                    pp.image.info["postprocessing"] = infotext
+
+                if save_output:
+                    images.save_image(pp.image, path=outpath, basename=basename, seed=None, prompt=None, extension=opts.samples_format, info=infotext, short_filename=True, no_prompt=True, grid=False, pnginfo_section_name="extras", existing_info=existing_pnginfo, forced_filename=None)
+
+                parts_outputs.append(pp.image)
+
+            img = Image.new('RGB', (images[0].width*2, images[0].width*2))
+
+            for i in range(2):
+                for j in range(2):
+                    idx = j + 2 * i
+                    if idx >= len(parts_outputs):
+                        break
+                    img.paste(parts_outputs[idx], (i * parts_outputs[0].width, j * parts_outputs[0].width))
+
+            outputs.append(img)
+    # elif extras_mode == 2:
+    #     assert not shared.cmd_opts.hide_ui_dir_config, '--hide-ui-dir-config option must be disabled'
+    #     assert input_dir, 'input directory not selected'
+
+    #     image_list = shared.listfiles(input_dir)
+    #     for filename in image_list:
+    #         try:
+    #             image = Image.open(filename)
+    #         except Exception:
+    #             continue
+    #         image_data.append(image)
+    #         image_names.append(filename)
+    # else:
+    #     assert image, 'image not selected'
+
+    #     image_data.append(image)
+    #     image_names.append(None)
+
+    # if extras_mode == 2 and output_dir != '':
+    #     outpath = output_dir
+    # else:
+
+
+
 
     devices.torch_gc()
 
