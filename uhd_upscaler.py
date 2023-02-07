@@ -20,7 +20,9 @@ def run_postprocessing(extras_mode, image, image_folder, input_dir, output_dir, 
 
     infotext = ''
 
-    for img in image_folder:
+    image_paths = image_folder.split(";")
+
+    for img in image_paths:
         image = Image.open(img)
         image_data.append(image)
         name = os.path.splitext(img.orig_name)[0]
@@ -33,7 +35,7 @@ def run_postprocessing(extras_mode, image, image_folder, input_dir, output_dir, 
         parts_outputs = []
         image_cropped=False
 
-        if width > 512:
+        if width > 256:
             image_cropped = True
             parts.append(image.crop((0, 0, width / 2, height / 2)))
             parts.append(image.crop((width / 2, 0, width, height / 2)))

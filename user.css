@@ -7,5 +7,5 @@
 }
 
 #tab_UHD_interface #extras_scale_to_tab{
-    display: block !important;
+    display: none !important;
 }
