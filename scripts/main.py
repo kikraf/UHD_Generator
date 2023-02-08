@@ -5,6 +5,14 @@ from modules import script_callbacks, shared
 import os
 from extensions.UHD_Generator import uhd_upscaler
 
+extras_batch_input_dir=""
+def load_paths(file, textbox):
+    paths=""
+    for path in file.value:
+        paths.append(path+";")
+    textbox.value=paths
+    return textbox
+
 def show_images(image_paths):
     images = []
     for path in image_paths:
@@ -45,7 +53,7 @@ def on_ui_tabs():
                     script_inputs = scripts.scripts_postproc.setup_ui()
 
                     for s in script_inputs[1:]:
-                        print("+ "+s.elem_id+": "+s.value)
+                        print("+ "+s.elem_id+": "+str(s.value))
                         if s.elem_id == "extras_upscaler_1":
                             s.value = "R-ESRGAN 4x+"
                         elif s.elem_id == "extras_upscaling_resize_w":
@@ -53,10 +61,7 @@ def on_ui_tabs():
                         # if s.elem_id != "extras_upscaling_resize_w" and s.elem_id !="extras_upscaler_1":
                         #     s.visible=False
                     
-                    extras_batch_input_dir = []
-                    for file in image_batch:
-                        path=file.value
-                        extras_batch_input_dir.append(path+";")
+
 
                     
                     submit = gr.Button('Generate', elem_id="extras_generate", variant='primary')
@@ -69,13 +74,19 @@ def on_ui_tabs():
         #Unused elements
         extras_image = gr.Image(label="Source", source="upload", interactive=True, type="pil", elem_id="extras_image")
         # extras_image.visible = False
-        #extras_batch_input_dir = gr.Textbox(label="Input directory", **shared.hide_dirs, placeholder="A directory on the same machine where the server is running.", elem_id="extras_batch_input_dir")
+        extras_batch_input_dir = gr.Textbox(label="Input directory", **shared.hide_dirs, placeholder="A directory on the same machine where the server is running.", elem_id="extras_batch_input_dir")
         # extras_batch_input_dir.visible = False
         extras_batch_output_dir = gr.Textbox(label="Output directory", **shared.hide_dirs, placeholder="Leave blank to save images to the default path.", elem_id="extras_batch_output_dir")
         # extras_batch_output_dir.visible = False
         show_extras_results = gr.Checkbox(label='Show result images', value=True, elem_id="extras_show_extras_results")
         # show_extras_results.visible = False
         tab_autoupscale.select(fn=lambda: 1, inputs=[], outputs=[tab_index])
+
+        image_batch.change(
+            fn=load_paths,
+            inputs=[image_batch, extras_batch_input_dir],
+            outputs=[extras_batch_input_dir]
+        )
 
         scale_mult.change(
             fn=change_scale,
