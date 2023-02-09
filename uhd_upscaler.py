@@ -6,7 +6,8 @@ from modules import shared, images, devices, scripts, scripts_postprocessing, ui
 from modules.shared import opts
 
 
-def run_postprocessing(extras_mode, image, image_folder, input_dir, output_dir, show_extras_results, *args, save_output: bool = True):
+def run_postprocessing(extras_mode, imagen, image_folder, input_dir, output_dir, show_extras_results, *args, save_output: bool = True):
+    print("entrando a postprocessing")
     devices.torch_gc()
 
     shared.state.begin()
